@@ -8,8 +8,8 @@ import string
 import tempfile
 import ConfigParser
 
-import ttyio
-import bbsengine
+import ttyio4 as ttyio
+import bbsengine4 as bbsengine
 
 ZOIDWEB2CFG = "/etc/zoidweb2/zoidweb2.cfg"
 
