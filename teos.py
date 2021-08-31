@@ -81,9 +81,9 @@ def _edit(sig, header):
   original["introhash"] = introhash
   
   while not done:
-    print "-="*40+"-"
-    print header
-    print "-="*40+"-"
+    ttyio.echo("-="*40+"-")
+    ttyio.echo(header)
+    ttyio.echo("-="*40+"-")
     print
 
     if sig != original:
@@ -93,58 +93,58 @@ def _edit(sig, header):
       sig["name"] = buildnamefromtitle(sig["title"])
 
     if sig["name"] is None:
-      print "[N]ame"
+      ttyio.echo("[N]ame")
     else:
-      print "[N]ame: %s" % (sig["name"]),
+      ttyio.echo("[N]ame: %s" % (sig["name"]))
       if original["name"] != sig["name"]:
-        print "(was '%s')" % (original["name"])
+        ttyio.echo("(was %s)" % (original["name"]))
       else:
         print
 
     if sig["title"] is None:
-      print "[T]itle"
+      ttyio.echo("[T]itle")
     else:
-      print "[T]itle: %s" % (sig["title"]),
+      ttyio.echo("[T]itle: %s" % (sig["title"]))
       if original["title"] != sig["title"]:
-        print "(was %s)" % (original["title"])
+        ttyio.echo("(was %s)" % (original["title"]))
       else:
         print
     
     if sig["intro"] != original["intro"]:
-      print "[I]ntro (changed)"
+      ttyio.echo("[I]ntro (changed)")
     else:
-      print "[I]ntro"
-    print "[Q]uit"
+      ttyio.echo("[I]ntro")
+    ttyio.echo("[Q]uit")
 
     if sig["name"] is not None:
       parentid = sig["parentid"]
       name = sig["name"]
       path = "%s.%s" % (getsigpath(parentid), name)
-      print "path=%r" % (path)
+      ttyio.echo("path=%r" % (path), level="debug")
       sig["path"] = path
 
     ch = ttyio.accept(header, "NTIQ", "")
     if ch == "Q":
-      print "quit"
+      ttyio.echo("quit")
       done = True
     elif ch == "N":
-      print "name"
+      ttyio.echo("name")
       buf = bbsengine.inputstring("name: ", sig["name"])
-      print buf
+      ttyio.echo(buf)
       if buf == "":
         sig["name"] = None
       else:
         sig["name"] = buf
     elif ch == "T":
-      print "title"
+      ttyio.echo("title")
       buf = bbsengine.inputstring("title: ", sig["title"])
-      print buf
+      ttyio.echo(buf)
       if buf == "":
         sig["title"] = None
       else:
         sig["title"] = buf
     elif ch == "I":
-      print "intro"
+      ttyio.echo("intro")
       print
       if os.environ.has_key("VISUAL"):
         editor = os.environ["VISUAL"]
@@ -164,7 +164,7 @@ def _edit(sig, header):
         os.system("%s %s" % (editor, introfn))
       except:
         print
-        print "error running editor"
+        ttyio.echo("error running editor")
         print
       else:
         if os.access(introfn, os.F_OK|os.R_OK):
@@ -185,10 +185,10 @@ def _get(dbh, id):
   cur = dbh.cursor()
   cur.execute(sql, dat)
   res = cur.fetchall()
-  print "debug: res=",res
+  ttyio.echo("debug: res=%s" % (res))
   if res is None or len(res) == 0:
     print
-    print "invalid id"
+    ttyio.echo("invalid id")
     print
     return None
   rec = res[0]
@@ -207,32 +207,32 @@ def _get(dbh, id):
 def editsig(dbh):
   sigid = bbsengine.inputsig(ZOIDWEB2CFG)
   if sigid is None:
-    print "aborted"
+    ttyio.echo("aborted")
     return
 
   _sig = _get(dbh, sigid)
   if _sig is None:
-    print "could not load sig record"
+    ttyio.echo("could not load sig record")
     return
   sig = copy.deepcopy(_sig)
   res = _edit(sig, "edit sig")
   if res is None:
-    print "** error editing sig **"
+    ttyio.echo("** error editing sig **")
     return
 
-  print "new=",res
-  print "old=",sig
+  ttyio.echo("new=%r" % (res))
+  ttyio.echo("old=%r" % (old))
   if bbsengine.inputboolean("save?") is True:
     sig["lastmodified"] = "now()"
     sig["lastmodifiedby"] = currentmemberid
     bbsengine.update(dbh, "sig", sigid, sig)
     dbh.commit()
     print
-    print "** sig updated **"
+    ttyio.echo("** sig updated **")
     print
   else:
     print
-    print "** sig not updated **"
+    ttyio.echo("** sig not updated **")
     print
   return
 
@@ -242,7 +242,7 @@ def listsigs(dbh):
   cur.execute(sql)
   res = cur.fetchall()
   for rec in res:
-    print rec["path"]
+    ttyio.echo(rec["path"])
   return
 
 def addsig(dbh):
@@ -257,8 +257,8 @@ def addsig(dbh):
   rec = _edit(sig, "add sig")
 
   if rec["path"] is None:
-    print 
-    print "** no path specified. aborted. **"
+    ttyio.echo()
+    ttyio.echo("** no path specified. aborted. **")
     print
     return
 
@@ -275,10 +275,10 @@ def addsig(dbh):
     try:
       res = bbsengine.insert(dbh, "sig", sig)
     except Exception, e:
-      print e
+      ttyio.echo(e)
       dbh.rollback()
       bbsengine.logentry("addsig.0: error: %r" % (e))
-      print "[ERROR] sig not added (code: addsig.0)"
+      ttyio.echo("[ERROR] sig not added (code: addsig.0)")
       return False
     else:
       dbh.commit()
@@ -289,31 +289,31 @@ def main():
   dbh = bbsengine.dbconnect(ZOIDWEB2CFG, "system")
 
   while not done:
-    print "-="*40+"-"
-    print "teos (greek librarian) (categories)"
-    print "-="*40+"-"
+    ttyio.echo("-="*40+"-")
+    ttyio.echo("teos (sigs)")
+    ttyio.echo("-="*40+"-")
     print
-    print "[A]dd sig"
-    print "[E]dit sig"
-    print "[L]ist sigs"
+    ttyio.echo("[A]dd sig")
+    ttyio.echo("[E]dit sig")
+    ttyio.echo("[L]ist sigs")
     print
-    print "[Q]uit"
+    ttyio.echo("[Q]uit")
     ch = ttyio.accept("teos", "AELQ", "")
     if ch == "Q":
-      print "quit"
+      ttyio.echo("quit"))
       done = True
       continue
     elif ch == "A":
-      print "add sig"
+      ttyio.echo("add sig")
       addsig(dbh)
     elif ch == "E":
-      print "edit sig"
+      ttyio.echo("edit sig")
       editsig(dbh)
     elif ch == "L":
-      print "list sigs"
+      ttyio.echo("list sigs")
       listsigs(dbh)
     elif ch == "D":
-      print "delete sig"
+      ttyio.echo("delete sig")
       deletesig(dbh)
 
   return
@@ -325,6 +325,6 @@ if __name__ == "__main__":
   if membermap.has_key(loginid):
     currentmemberid = membermap[loginid]
   else:
-    print "uhmmm... you do not exist. go away!"
+    ttyio.echo("uhmmm... you do not exist. go away!")
     sys.exit(-1)
   main()
