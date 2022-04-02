@@ -1,3 +1,7 @@
+#
+# Copyright (C) 2021 zoidtechnologies.com. All Rights Reserved.
+#
+
 import os
 import re
 import pwd
@@ -6,12 +10,12 @@ import sys
 import copy
 import string
 import tempfile
-import ConfigParser
+# import ConfigParser
 
 import ttyio4 as ttyio
 import bbsengine4 as bbsengine
 
-ZOIDWEB2CFG = "/etc/zoidweb2/zoidweb2.cfg"
+# ZOIDWEB2CFG = "/etc/zoidweb2/zoidweb2.cfg"
 
 currentmemberid = None
 """
@@ -272,16 +276,16 @@ def addsig(dbh):
     sig["lastmodifiedbyid"] = currentmemberid
     sig["dateposted"] = "now()"
     sig["postedbyid"] = currentmemberid
-    try:
-      res = bbsengine.insert(dbh, "sig", sig)
-    except Exception, e:
-      ttyio.echo(e)
-      dbh.rollback()
-      bbsengine.logentry("addsig.0: error: %r" % (e))
-      ttyio.echo("[ERROR] sig not added (code: addsig.0)")
-      return False
-    else:
-      dbh.commit()
+#    try:
+    res = bbsengine.insert(dbh, "sig", sig)
+#    except:
+#      ttyio.echo(e)
+#      dbh.rollback()
+#      bbsengine.logentry("addsig.0: error: %r" % (e))
+#      ttyio.echo("[ERROR] sig not added (code: addsig.0)")
+#      return False
+#    else:
+    dbh.commit()
   return True
 
 def main():
@@ -300,7 +304,7 @@ def main():
     ttyio.echo("[Q]uit")
     ch = ttyio.accept("teos", "AELQ", "")
     if ch == "Q":
-      ttyio.echo("quit"))
+      ttyio.echo("quit")
       done = True
       continue
     elif ch == "A":
