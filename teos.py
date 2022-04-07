@@ -10,12 +10,11 @@ import sys
 import copy
 import string
 import tempfile
+from optparse import OptionParser
 # import ConfigParser
 
 import ttyio4 as ttyio
 import bbsengine4 as bbsengine
-
-# ZOIDWEB2CFG = "/etc/zoidweb2/zoidweb2.cfg"
 
 currentmemberid = None
 """
@@ -85,10 +84,11 @@ def _edit(sig, header):
   original["introhash"] = introhash
   
   while not done:
-    ttyio.echo("-="*40+"-")
-    ttyio.echo(header)
-    ttyio.echo("-="*40+"-")
-    print
+    bbsengine.title(header)
+#    ttyio.echo("-="*40+"-")
+#    ttyio.echo(header)
+#    ttyio.echo("-="*40+"-")
+#    print
 
     if sig != original:
       dirty = True
@@ -103,7 +103,7 @@ def _edit(sig, header):
       if original["name"] != sig["name"]:
         ttyio.echo("(was %s)" % (original["name"]))
       else:
-        print
+        ttyio.echo()
 
     if sig["title"] is None:
       ttyio.echo("[T]itle")
@@ -112,7 +112,7 @@ def _edit(sig, header):
       if original["title"] != sig["title"]:
         ttyio.echo("(was %s)" % (original["title"]))
       else:
-        print
+        ttyio.echo()
     
     if sig["intro"] != original["intro"]:
       ttyio.echo("[I]ntro (changed)")
@@ -148,14 +148,14 @@ def _edit(sig, header):
       else:
         sig["title"] = buf
     elif ch == "I":
-      ttyio.echo("intro")
-      print
-      if os.environ.has_key("VISUAL"):
+      ttyio.echo("intro{f6}")
+      
+      if "VISUAL" in os.environ:
         editor = os.environ["VISUAL"]
-      elif os.environ.has_key("EDITOR"):
+      elif "EDITOR" in os.environ:
         editor = os.environ["EDITOR"]
       else:
-        editor = "joe"
+        editor = "joe -r"
       introfn = tempfile.mktemp()
 
       intro = sig["intro"]
@@ -167,9 +167,7 @@ def _edit(sig, header):
       try:
         os.system("%s %s" % (editor, introfn))
       except:
-        print
-        ttyio.echo("error running editor")
-        print
+        ttyio.echo("{f6}error running editor{f6}")
       else:
         if os.access(introfn, os.F_OK|os.R_OK):
           fp = open(introfn, "r")
@@ -191,9 +189,7 @@ def _get(dbh, id):
   res = cur.fetchall()
   ttyio.echo("debug: res=%s" % (res))
   if res is None or len(res) == 0:
-    print
-    ttyio.echo("invalid id")
-    print
+    ttyio.echo("{f6}invalid id{f6}")
     return None
   rec = res[0]
 
@@ -231,22 +227,28 @@ def editsig(dbh):
     sig["lastmodifiedby"] = currentmemberid
     bbsengine.update(dbh, "sig", sigid, sig)
     dbh.commit()
-    print
-    ttyio.echo("** sig updated **")
-    print
+    ttyio.echo("{f6}** sig updated **{f6}")
   else:
-    print
-    ttyio.echo("** sig not updated **")
-    print
+    ttyio.echo("{f6}** sig not updated **{f6}")
   return
 
-def listsigs(dbh):
-  sql = "select * from engine.sig order by path"
+def listsigs(opts):
+  eros = bbsengine.checkeros(opts, currentmemberid)
+#  ttyio.echo("eros=%s" % (eros), level="debug")
+  sql = "select * from engine.sig"
+  if eros is False:
+    sql += " where not path ~ 'top.eros.*'"
+  sql += " order by path asc"
+  dbh = bbsengine.databaseconnect(opts)
   cur = dbh.cursor()
   cur.execute(sql)
-  res = cur.fetchall()
-  for rec in res:
-    ttyio.echo(rec["path"])
+  for sig in bbsengine.ResultIter(cur, 20):
+    ttyio.echo(sig["path"])
+    
+#  print(cur.mogrify(sql))
+#  res = cur.fetchall()
+#  for rec in res:
+#    ttyio.echo(rec["path"])
   return
 
 def addsig(dbh):
@@ -261,9 +263,7 @@ def addsig(dbh):
   rec = _edit(sig, "add sig")
 
   if rec["path"] is None:
-    ttyio.echo()
-    ttyio.echo("** no path specified. aborted. **")
-    print
+    ttyio.echo("{f6}** no path specified. aborted. **{f6}")
     return
 
   if bbsengine.inputboolean("add?") is True:
@@ -289,20 +289,41 @@ def addsig(dbh):
   return True
 
 def main():
-  done = False
-  dbh = bbsengine.dbconnect(ZOIDWEB2CFG, "system")
+  membermap = {"jam" : 1}
 
+  loginid = pwd.getpwuid(os.geteuid())[0]
+  if loginid in membermap:
+    currentmemberid = membermap[loginid]
+  else:
+    ttyio.echo("uhmmm... you do not exist. go away!")
+    sys.exit(-1)
+
+  parser = OptionParser(usage="usage: %prog [options]")
+  parser.add_option("--verbose", default=True, action="store_true", help="run %prog in verbose mode")
+  parser.add_option("--debug", default=False, action="store_true", help="run %prog in debug mode")
+  parser.add_option("--eros", default=False, action="store_true", help="enable one of two flags to allow adult content")
+  parser.add_option("--databasename", dest="databasename", action="store", default="zoidweb4", help="database name (%default)")
+  parser.add_option("--databasehost", dest="databasehost", action="store", default="localhost", help="database host (%default)")
+  parser.add_option("--databaseuser", dest="databaseuser", action="store", default=bbsengine.getcurrentmemberlogin(), help="database user (%default)")
+  parser.add_option("--databaseport", dest="databaseport", action="store", default="5432")
+  parser.add_option("--databasepassword", dest="databasepassword", action="store", default=None, help="database password")
+
+  (opts, args) = parser.parse_args()
+
+  dbh = bbsengine.databaseconnect(opts)
+
+
+  done = False
   while not done:
-    ttyio.echo("-="*40+"-")
-    ttyio.echo("teos (sigs)")
-    ttyio.echo("-="*40+"-")
-    print
+    bbsengine.title("teos (sigs)")
+
+    ttyio.echo("dbh=%r" % (dbh))
+
     ttyio.echo("[A]dd sig")
     ttyio.echo("[E]dit sig")
     ttyio.echo("[L]ist sigs")
-    print
-    ttyio.echo("[Q]uit")
-    ch = ttyio.accept("teos", "AELQ", "")
+    ttyio.echo("{f6}[Q]uit")
+    ch = ttyio.accept("teos: ", "AELQ", "")
     if ch == "Q":
       ttyio.echo("quit")
       done = True
@@ -315,7 +336,7 @@ def main():
       editsig(dbh)
     elif ch == "L":
       ttyio.echo("list sigs")
-      listsigs(dbh)
+      listsigs(opts)
     elif ch == "D":
       ttyio.echo("delete sig")
       deletesig(dbh)
@@ -323,12 +344,11 @@ def main():
   return
 
 if __name__ == "__main__":
-  membermap = {"jam" : 1}
-
-  loginid = pwd.getpwuid(os.geteuid())[0]
-  if membermap.has_key(loginid):
-    currentmemberid = membermap[loginid]
-  else:
-    ttyio.echo("uhmmm... you do not exist. go away!")
-    sys.exit(-1)
-  main()
+  try:
+    main()
+  except KeyboardInterrupt:
+    ttyio.echo("{/all}{bold}INTR{bold}")
+  except EOFError:
+    ttyio.echo("{/all}{bold}EOF{/bold}")
+  finally:
+    ttyio.echo("{reset}{/all}")
