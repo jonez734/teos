@@ -204,8 +204,8 @@ def _get(dbh, id):
   sig["intro"] = rec["intro"]
   return sig
 
-def editsig(dbh):
-  sigid = bbsengine.inputsig(ZOIDWEB2CFG)
+def editsig(opts):
+  sigid = bbsengine.inputsig(opts, multiple=False, noneok=True)
   if sigid is None:
     ttyio.echo("aborted")
     return
@@ -330,16 +330,16 @@ def main():
       continue
     elif ch == "A":
       ttyio.echo("add sig")
-      addsig(dbh)
+      addsig(opts)
     elif ch == "E":
       ttyio.echo("edit sig")
-      editsig(dbh)
+      editsig(opts)
     elif ch == "L":
       ttyio.echo("list sigs")
       listsigs(opts)
     elif ch == "D":
       ttyio.echo("delete sig")
-      deletesig(dbh)
+      deletesig(opts)
 
   return
 
