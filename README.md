@@ -6,7 +6,5 @@
 - [ ] www: edit is broken
 - [ ] tty: teos.py
 - [ ] tty: write setup.py
-
-
-
+- [ ] control for not listing top.eros.* if EROS flag and --eros arg not present (@since 20220406)
 
