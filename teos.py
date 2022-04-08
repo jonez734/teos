@@ -312,7 +312,6 @@ def main():
 
   dbh = bbsengine.databaseconnect(opts)
 
-
   done = False
   while not done:
     bbsengine.title("teos (sigs)")
