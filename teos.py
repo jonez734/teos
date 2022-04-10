@@ -74,23 +74,18 @@ def _edit(sig, header):
   dirty = False
   done = False
   
-  original = copy.deepcopy(sig)
+  origsig = copy.deepcopy(sig)
   if sig["intro"] is not None:
     introhash = hashlib.new("md5")
     introhash.update(sig["intro"])
   else:
     introhash = None
 
-  original["introhash"] = introhash
+  origsig["introhash"] = introhash
   
   while not done:
     bbsengine.title(header)
-#    ttyio.echo("-="*40+"-")
-#    ttyio.echo(header)
-#    ttyio.echo("-="*40+"-")
-#    print
-
-    if sig != original:
+    if sig != origsig:
       dirty = True
 
     if sig["name"] is None and sig["title"] is not None:
@@ -100,8 +95,8 @@ def _edit(sig, header):
       ttyio.echo("[N]ame")
     else:
       ttyio.echo("[N]ame: %s" % (sig["name"]))
-      if original["name"] != sig["name"]:
-        ttyio.echo("(was %s)" % (original["name"]))
+      if origsig["name"] != sig["name"]:
+        ttyio.echo("(was %s)" % (origsig["name"]))
       else:
         ttyio.echo()
 
@@ -109,23 +104,23 @@ def _edit(sig, header):
       ttyio.echo("[T]itle")
     else:
       ttyio.echo("[T]itle: %s" % (sig["title"]))
-      if original["title"] != sig["title"]:
-        ttyio.echo("(was %s)" % (original["title"]))
+      if origsig["title"] != sig["title"]:
+        ttyio.echo("(was %s)" % (origsig["title"]))
       else:
         ttyio.echo()
     
-    if sig["intro"] != original["intro"]:
+    if sig["intro"] != origsig["intro"]:
       ttyio.echo("[I]ntro (changed)")
     else:
       ttyio.echo("[I]ntro")
     ttyio.echo("[Q]uit")
 
-    if sig["name"] is not None:
-      parentid = sig["parentid"]
-      name = sig["name"]
-      path = "%s.%s" % (getsigpath(parentid), name)
-      ttyio.echo("path=%r" % (path), level="debug")
-      sig["path"] = path
+#    if sig["name"] is not None:
+#      parentid = sig["parentid"]
+#      name = sig["name"]
+#      path = "%s.%s" % (getsigpath(parentid), name)
+#      ttyio.echo("path=%r" % (path), level="debug")
+#      sig["path"] = path
 
     ch = ttyio.accept(header, "NTIQ", "")
     if ch == "Q":
@@ -257,7 +252,6 @@ def addsig(dbh):
   sig["name"] = None
   sig["parentid"] = None
   sig["intro"] = None
-#  sig["parent"] = None
   sig["path"] = None
   
   rec = _edit(sig, "add sig")
@@ -267,8 +261,7 @@ def addsig(dbh):
     return
 
   if bbsengine.inputboolean("add?") is True:
-    rec["path"] = rec["path"].replace("-","_")
-    sig["path"] = rec["path"]
+    sig["path"] = rec["path"].replace("-","_")
     sig["title"] = rec["title"]
     sig["name"] = rec["name"]
     sig["intro"] = rec["intro"]
@@ -276,15 +269,7 @@ def addsig(dbh):
     sig["lastmodifiedbyid"] = currentmemberid
     sig["dateposted"] = "now()"
     sig["postedbyid"] = currentmemberid
-#    try:
     res = bbsengine.insert(dbh, "sig", sig)
-#    except:
-#      ttyio.echo(e)
-#      dbh.rollback()
-#      bbsengine.logentry("addsig.0: error: %r" % (e))
-#      ttyio.echo("[ERROR] sig not added (code: addsig.0)")
-#      return False
-#    else:
     dbh.commit()
   return True
 
