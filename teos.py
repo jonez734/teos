@@ -237,7 +237,7 @@ def listsigs(opts):
   dbh = bbsengine.databaseconnect(opts)
   cur = dbh.cursor()
   cur.execute(sql)
-  for sig in bbsengine.ResultIter(cur, 20):
+  for sig in bbsengine.resultiter(cur, 20):
     ttyio.echo(sig["path"])
     
 #  print(cur.mogrify(sql))
