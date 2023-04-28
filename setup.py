@@ -15,6 +15,6 @@ setup(
   author_email="%s@projects.zoidtechnologies.com" % (projectname),
   scripts=["teos"],
   py_modules=["teos"]
-  requires=["ttyio5", "bbsengine5"],
+  requires=["ttyio5", "bbsengine6"],
   license="GPLv2"
 )
