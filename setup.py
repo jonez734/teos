@@ -1,4 +1,5 @@
-from distutils.core import setup
+from setuptools import setup
+# from distutils.core import setup
 
 import time
 
@@ -7,13 +8,13 @@ projectname = "teos"
 
 setup(
   name=projectname,
-  description="a set of Python scripts for project management based in part on RFC1297",
+  description="a program to manage SIGs on zoidtechnologies.com",
   version=v,
   url="http://projects.zoidtechnologies.com/%s/" % (projectname),
-  author="zoid technologies",
+  author="zoidtechnologies.com",
   author_email="%s@projects.zoidtechnologies.com" % (projectname),
   scripts=["teos"],
   py_modules=["teos"]
-  requires=["ttyio4", "bbsengine4"],
+  requires=["ttyio5", "bbsengine5"],
   license="GPLv2"
 )
