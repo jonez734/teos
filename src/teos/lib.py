@@ -46,7 +46,7 @@ def getsigpath(id):
   res = cur.fetchone()
   return res["path"]
 
-def buildsig(rec):
+def buildsig(rec:dict) -> dict:
   sig = {}
   if rec.has_key("id"):
     sig["id"] = rec["id"]
@@ -58,7 +58,7 @@ def buildsig(rec):
 
   return sig
 
-def _delete(dbh, table, id):
+def _delete(dbh, table:str, id:int):
   sql = "delete from %s where id=%s"
   dat = (table, id)
   cur = dbh.cursor()
